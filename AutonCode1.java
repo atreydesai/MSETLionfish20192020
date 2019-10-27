@@ -16,16 +16,16 @@ public class AutonCode1 extends LinearOpMode { //redPlat
         frontRight  = hardwareMap.get(DcMotor.class, "frontRight");
         backLeft  = hardwareMap.get(DcMotor.class, "backLeft");
         backRight  = hardwareMap.get(DcMotor.class, "backRight");
-        platform = hardwareMap.get(Servo.class, "platform");
+        //platform = hardwareMap.get(Servo.class, "platform");
         hooks1 = hardwareMap.get(Servo.class, "hooks1");
         hooks2 = hardwareMap.get(Servo.class, "hooks2");
         telemetry.addData("Status", "Initialized");
         telemetry.update();
-        frontLeft.setDirection(DcMotor.Direction.FORWARD);
-        backLeft.setDirection(DcMotor.Direction.FORWARD);
+        frontLeft.setDirection(DcMotor.Direction.REVERSE);
+        backLeft.setDirection(DcMotor.Direction.REVERSE);
         frontRight.setDirection ( DcMotor.Direction.REVERSE);
         backRight.setDirection(DcMotor.Direction.REVERSE);
-
+        waitForStart();
         /* skeleton code
         forward(null);
         platDown ( null );
@@ -44,6 +44,14 @@ public class AutonCode1 extends LinearOpMode { //redPlat
         turn(false, null);
         forward(null);
         */
+        /* backup auton (Works for redPlat and blueQuarry)
+        forward(null);
+        turn(false, 90);
+        forward(null);
+         */
+        //back up auton 2.0
+        forward(12);
+
 
     }
     public int distanceCalc(int distance){
@@ -52,32 +60,51 @@ public class AutonCode1 extends LinearOpMode { //redPlat
     }
     public void forward(int distance) {
         reset();
-        frontLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        frontRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        backLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        backRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         int tick = distanceCalc(distance);
+        /*
         frontLeft.setTargetPosition(tick);
         frontRight.setTargetPosition(tick);
         backLeft.setTargetPosition(tick);
         backRight.setTargetPosition(tick);
-        while(frontLeft.isBusy() && frontRight.isBusy() && backLeft.isBusy() && backRight.isBusy() && opModeIsActive()) {
-
-        }
-        stopDrive();
-
-    }
-    public void backwards(int distance) {
-        reset();
         frontLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         frontRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         backLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         backRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        frontLeft.setPower(1);
+        frontRight.setPower(1);
+        backLeft.setPower(1);
+        backRight.setPower(1);
+        while(frontLeft.isBusy() || frontRight.isBusy() || backLeft.isBusy() || backRight.isBusy() || opModeIsActive()) {
+
+        }
+         */
+
+        while(frontLeft.getCurrentPosition()<tick){
+            frontLeft.setPower(1);
+            frontRight.setPower(1);
+            backLeft.setPower(1);
+            backRight.setPower(1);
+        }
+
+        stopDrive();
+
+
+    }
+    public void backwards(int distance) {
+        reset();
         int tick = distanceCalc(-distance);
         frontLeft.setTargetPosition(tick);
         frontRight.setTargetPosition(tick);
         backLeft.setTargetPosition(tick);
         backRight.setTargetPosition(tick);
+        frontLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        frontRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        backLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        backRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        frontLeft.setPower(-1);
+        backLeft.setPower(-1);
+        frontRight.setPower(-1);
+        backRight.setPower(-1);
         while(frontLeft.isBusy() && frontRight.isBusy() && backLeft.isBusy() && backRight.isBusy() && opModeIsActive()) {
 
         }
