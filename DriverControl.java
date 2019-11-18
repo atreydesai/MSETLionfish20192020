@@ -54,10 +54,10 @@ public class DriverControl extends LinearOpMode{
             else if(this.gamepad2.b==true){
                 clawOff();
             }
-            if(this.gamepad2.dpad_up==true){
+            if(this.gamepad2.left_bumper==true){
                 liftUp();
             }
-            else if(this.gamepad2.dpad_down==true){
+            else if(this.gamepad2.right_bumper==true){
                 liftDown();
             }
             else if(this.gamepad2.dpad_right==true){
