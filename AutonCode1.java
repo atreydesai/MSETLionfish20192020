@@ -5,10 +5,10 @@ package org.firstinspires.ftc.teamcode;
         import com.qualcomm.robotcore.hardware.DcMotor;
         import com.qualcomm.robotcore.hardware.Servo;
 
-@Autonomous(name="BluePlat", group="LinearOpMode")
+@Autonomous(name="RedPlat", group="LinearOpMode")
 public class AutonCode1 extends LinearOpMode { //redPlat
     private DcMotor frontLeft, backLeft, frontRight, backRight, claw, lift;
-    private Servo hooks1, hooks2, platform;
+    private Servo hooks1, hooks2, block;
     public int d = 4; //Diameter of Wheel
     public double tick = 537.6; //# of ticks for one rotation
     public boolean left=true;
@@ -22,7 +22,7 @@ public class AutonCode1 extends LinearOpMode { //redPlat
         lift = hardwareMap.get(DcMotor.class, "lift1");
         hooks1 = hardwareMap.get(Servo.class, "hooks1");
         hooks2 = hardwareMap.get(Servo.class, "hooks2");
-
+        //block = hardwareMap.get(Servo.class, "block");
         telemetry.addData("Status", "Initialized");
         telemetry.update();
         frontLeft.setDirection(DcMotor.Direction.FORWARD);
@@ -30,19 +30,27 @@ public class AutonCode1 extends LinearOpMode { //redPlat
         frontRight.setDirection ( DcMotor.Direction.FORWARD);
         backRight.setDirection(DcMotor.Direction.FORWARD);
         waitForStart();
-        beginClaw();
-        forward(0);
+
+        forward(51);
         hDown(); //maybe hUp();
-        backwards(0); //same as the first forward
+        backwards(51); //same as the first forward
         hUp();
-        strafe(right,0);
-        forward(0);
-        strafe(left,0);
-        backwards(0);
-        strafe(right,0);
+        strafe(left,48);
+        //forward(24); if we need to park far area
 
 
     }
+    /*
+    public void bUp(){//hook servo up
+        block.setPosition(0);
+        telemetry.addData("Servo Power", block.getPosition());
+    }
+    public void bDown(){//hook servo down
+        block.setPosition(1);
+        telemetry.addData("Servo Power", block.getPosition ());
+    }
+
+     */
     public void hUp(){//hook servo up
         hooks1.setPosition(0);
         hooks2.setPosition(1);
@@ -63,17 +71,13 @@ public class AutonCode1 extends LinearOpMode { //redPlat
     public void forward(int distance) {
         reset();
         int tick = distanceCalc(distance);
-
         setTarget(tick);
-
         frontLeft.setPower(0.5);
         frontRight.setPower(0.5);
         backRight.setPower(0.5);
         backLeft.setPower(0.5);
         while(frontLeft.isBusy() && opModeIsActive()) {
-
         }
-
         stopDrive();
     }
     public void backwards(int distance) {
