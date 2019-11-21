@@ -8,9 +8,10 @@ import com.qualcomm.robotcore.hardware.Servo;
 @Autonomous(name="AutonCode4", group="LinearOpMode")
 public class AutonCode4 extends LinearOpMode { //bluePark
     private DcMotor frontLeft, backLeft, frontRight, backRight, claw, lift;
-    private Servo hooks1, hooks2, platform;
+    private Servo hooks1, hooks2, block;
     public int d = 4; //Diameter of Wheel
     public double tick = 537.6; //# of ticks for one rotation
+    public boolean left=true, right=false;
     public void runOpMode(){
         frontLeft  = hardwareMap.get(DcMotor.class, "frontLeft");
         frontRight  = hardwareMap.get(DcMotor.class, "frontRight");
@@ -31,6 +32,27 @@ public class AutonCode4 extends LinearOpMode { //bluePark
         forward(0);
 
 
+    }
+    public void hUp(){//hook servo up
+        hooks1.setPosition(0);
+        hooks2.setPosition(1);
+        telemetry.addData("Servo Power", hooks1.getPosition());
+        telemetry.addData("Servo Power", hooks2.getPosition());
+
+    }
+    public void hDown(){//hook servo down
+        hooks1.setPosition(1);
+        hooks2.setPosition(0);
+        telemetry.addData("Servo Power", hooks1.getPosition());
+        telemetry.addData("Servo Power", hooks2.getPosition());
+    }
+    public void bUp(){//hook servo up
+        block.setPosition(0);
+        telemetry.addData("Servo Power", block.getPosition());
+    }
+    public void bDown(){//hook servo down
+        block.setPosition(1);
+        telemetry.addData("Servo Power", block.getPosition ());
     }
     public int distanceCalc(int distance){
         int ticks=(int)(tick*(distance/(12.56)));
