@@ -9,8 +9,9 @@ import com.qualcomm.robotcore.hardware.Servo;
 @TeleOp(name="DriverControl", group="LinearOpmode")
 public class DriverControl extends LinearOpMode{
 
-    private DcMotor frontLeft, backLeft, frontRight, backRight, claw, lift1, lift2;
-    private Servo hooks1,hooks2;
+    private DcMotor frontLeft, backLeft, frontRight, backRight, claw, lift1;
+    private Servo hooks1,hooks2,block;
+    public float fbLeftStick, lrLeftStick, lrRightStick;
     public void runOpMode(){
         frontLeft  = hardwareMap.get(DcMotor.class, "frontLeft");
         frontRight  = hardwareMap.get(DcMotor.class, "frontRight");
@@ -18,7 +19,7 @@ public class DriverControl extends LinearOpMode{
         backRight  = hardwareMap.get(DcMotor.class, "backRight");
         claw = hardwareMap.get(DcMotor.class, "claw");
         lift1 = hardwareMap.get(DcMotor.class, "lift1");
-        lift2 = hardwareMap.get(DcMotor.class, "lift2");
+        //block = hardwareMap.get(Servo.class, "block");
         hooks1 = hardwareMap.get(Servo.class, "hooks1");
         hooks2 = hardwareMap.get(Servo.class, "hooks2");
 
@@ -36,17 +37,23 @@ public class DriverControl extends LinearOpMode{
 
         //put all movement code in here
         while(opModeIsActive()){
-            //joystick control code
-            fbLeftStick = -this.gamepad1.left_stick_y;
-            lrRightStick = this.gamepad1.right_stick_x; //if turning the wrong direction reverse the sign
 
             if(this.gamepad1.right_trigger > 0.1){
                 hUp();
 
             }
-            else if(this.gamepad1.right_bumper == true) {
+            /*
+            else if(this.gamepad1.left_bumper == true) {
                 hDown();
+            }
+            if(this.gamepad1.right_trigger > 0.1){
+                bUp();
 
+            }
+
+             */
+            else if(this.gamepad1.left_bumper == true) {
+                bDown();
             }
             if(this.gamepad2.a==true){
                 clawOpen();
@@ -60,17 +67,25 @@ public class DriverControl extends LinearOpMode{
             else if(this.gamepad2.right_bumper==true){
                 liftDown();
             }
-            else if(this.gamepad2.dpad_right==true){
+            else{
                 liftOff();
             }
-            movingFB(fbLeftStick);
-            strafe(lrLeftStick);
-            turn(lrRightStick);
+            movingFB();
+            strafe();
+            turn();
 
 
             telemetry.addData("Status", "Running");
             telemetry.update();
         }
+    }
+    public void bUp(){//hook servo up
+        block.setPosition(0);
+        telemetry.addData("Servo Power", block.getPosition());
+    }
+    public void bDown(){//hook servo down
+        block.setPosition(1);
+        telemetry.addData("Servo Power", block.getPosition ());
     }
     public void tank(double fbLeftStick, double fbRightStick){ //tank drive (one joystick controls one side of wheels)
 
@@ -86,36 +101,36 @@ public class DriverControl extends LinearOpMode{
         telemetry.addData("Motor Power", backRight.getPower());
 
     }
-    public void movingFB(double fbLeftStick){// moving forwards and backwards
-
+    public void movingFB(){// moving forwards and backwards
+        fbLeftStick = -this.gamepad1.left_stick_y;
         frontLeft.setPower(fbLeftStick);
         frontRight.setPower(fbLeftStick);
-        backLeft.setPower(fbLeftStick);
-        backRight.setPower(fbLeftStick);
+        backLeft.setPower(-fbLeftStick);
+        backRight.setPower(-fbLeftStick);
         telemetry.addData("Target Power", fbLeftStick);
         telemetry.addData("Motor Power", frontLeft.getPower());
         telemetry.addData("Motor Power", frontRight.getPower());
         telemetry.addData("Motor Power", backLeft.getPower());
         telemetry.addData("Motor Power", backRight.getPower());
     }
-    public void turn(double lrRightStick){//turning in place
-
+    public void turn(){//turning in place
+        lrRightStick = this.gamepad1.right_stick_x;
         frontLeft.setPower(-lrRightStick);
         backLeft.setPower(lrRightStick);
-        frontRight.setPower(-lrRightStick);
-        backRight.setPower(lrRightStick);
+        frontRight.setPower(lrRightStick);
+        backRight.setPower(-lrRightStick);
         telemetry.addData("Target Power", lrRightStick);
         telemetry.addData("Motor Power", frontLeft.getPower());
         telemetry.addData("Motor Power", frontRight.getPower());
         telemetry.addData("Motor Power", backLeft.getPower());
         telemetry.addData("Motor Power", backRight.getPower());
     }
-    public void strafe(double lrLeftStick){ //moving the root side to side w/o turning
-
+    public void strafe(){ //moving the root side to side w/o turning
+        lrLeftStick= this.gamepad1.left_stick_x;
         frontLeft.setPower(lrLeftStick);
-        backLeft.setPower(-lrLeftStick);
+        backLeft.setPower(lrLeftStick);
         frontRight.setPower(-lrLeftStick);
-        backRight.setPower(lrLeftStick);
+        backRight.setPower(-lrLeftStick);
         telemetry.addData("Target Power", lrLeftStick);
         telemetry.addData("Motor Power", frontLeft.getPower());
         telemetry.addData("Motor Power", frontRight.getPower());
@@ -124,16 +139,15 @@ public class DriverControl extends LinearOpMode{
     }
 
     public void clawOpen(){
-        claw.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         claw.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        int angle = 0;
-        claw.setTargetPosition (angle);
-        claw.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        claw.setPower(0.5);
-        while(claw.isBusy() && opModeIsActive()) {
-            claw.getCurrentPosition();
-        }
+        claw.setPower(-0.2);
+        telemetry.addData("Target Power", -0.2);
+        telemetry.addData("Motor Power", claw.getPower());
+    }
+    public void clawHold(){
         claw.setPower(0);
+        telemetry.addData("Target Power", 0);
+        telemetry.addData("Motor Power", claw.getPower());
     }
     public void clawOff(){
         claw.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
@@ -143,30 +157,30 @@ public class DriverControl extends LinearOpMode{
     }
     public void liftUp(){
         lift1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        lift2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
         lift1.setPower(0.5);
-        lift2.setPower(0.5);
+
         telemetry.addData("Target Power", 0.5);
         telemetry.addData("Motor Power", lift1.getPower());
-        telemetry.addData("Motor Power", lift2.getPower());
+
     }
     public void liftDown(){
         lift1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        lift2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
         lift1.setPower(-0.5);
-        lift2.setPower(-0.5);
+
         telemetry.addData("Target Power", -0.5);
         telemetry.addData("Motor Power", lift1.getPower());
-        telemetry.addData("Motor Power", lift2.getPower());
+
     }
     public void liftOff(){
-        lift1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        lift2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+
+
         lift1.setPower(0);
-        lift2.setPower(0);
+
         telemetry.addData("Target Power", 0);
         telemetry.addData("Motor Power", lift1.getPower());
-        telemetry.addData("Motor Power", lift2.getPower());
+
     }
     public void hUp(){//hook servo up
         hooks1.setPosition(0);
