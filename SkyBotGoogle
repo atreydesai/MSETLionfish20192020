@@ -1,0 +1,46 @@
+package org.firstinspires.ftc.teamcode;
+
+
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.hardware.ColorSensor;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.TouchSensor;
+
+
+public class SkyBotGoogle extends OpMode {
+    public boolean left = true, right = false;
+    public DcMotor fl, fr, bl, br, lift, in1, in2;
+    public Servo pm1, pm2, ac, clamp, arm, cap, inh1,inh2;
+    public ColorSensor skySense;
+    public TouchSensor stoneChecker;
+    public double encoderTick = 537.6;
+    public void init() {
+        fl = hardwareMap.get(DcMotor.class, "fl"); //drivetrain
+        fr = hardwareMap.get(DcMotor.class, "fr");
+        bl = hardwareMap.get(DcMotor.class, "bl");
+        br = hardwareMap.get(DcMotor.class, "br");
+        lift = hardwareMap.get(DcMotor.class, "lift"); //lift
+        lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        in1 = hardwareMap.get(DcMotor.class, "in1"); //intake
+        in2 = hardwareMap.get(DcMotor.class, "in2");
+        arm = hardwareMap.get(Servo.class, "arm");
+        pm1 = hardwareMap.get(Servo.class, "pm1"); //platform movers
+        pm2 = hardwareMap.get(Servo.class, "pm2");
+        ac = hardwareMap.get(Servo.class, "ac"); //autonomous claw
+        clamp = hardwareMap.get(Servo.class, "clamp");//claw which grabs on the skystone
+        cap = hardwareMap.get(Servo.class, "cap");
+        inh1 = hardwareMap.get(Servo.class, "inh1");//
+        inh2 = hardwareMap.get(Servo.class, "inh2");
+        skySense = hardwareMap.get(ColorSensor.class, "skySense");
+        stoneChecker = hardwareMap.get(TouchSensor.class, "stoneChecker");
+        fr.setDirection(DcMotor.Direction.REVERSE);
+        br.setDirection(DcMotor.Direction.REVERSE);
+        telemetry.addData("Status", "Initialized");
+    }
+    public void start() { }
+    public void init_loop(){ }
+    public void loop() {
+
+    }
+}
