@@ -8,7 +8,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 
 
-public class SkyBotGoogle extends OpMode {
+public class SkyBot extends OpMode {
     public boolean left = true, right = false;
     public DcMotor fl, fr, bl, br, lift, in1, in2;
     public Servo pm1, pm2, ac, clamp, arm, cap, inh1,inh2;
