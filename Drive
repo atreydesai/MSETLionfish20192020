@@ -1,0 +1,70 @@
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+
+@TeleOp(name="DC",group = "OpMode" )
+public class Drive extends skyBot{
+    public double fbls , lrls, lrrs;
+    public void init() { //calling init from SkyBotGoogle
+        super.init();
+    }
+    public void start(){
+        super.start();
+    }
+    public void loop(){
+       fb();
+       lr();
+       strafe();
+       lift();
+    }
+    public void fb(){ //moving forward and backwards according to controller inputs
+        fbls = -gamepad1.left_stick_y;
+        fl.setPower(fbls);
+        fr.setPower(fbls);
+        bl.setPower(fbls);
+        br.setPower(fbls);
+        telemetry.addData("frontLeft", fl.getPower());
+        telemetry.addData("frontLeft", fr.getPower());
+        telemetry.addData("frontLeft", bl.getPower());
+        telemetry.addData("frontLeft", br.getPower());
+        telemetry.addData("Drive Power", fbls);
+    }
+    public void lr(){ //turning in place according to controller inputs
+        lrrs = -gamepad1.right_stick_x;
+        fl.setPower(lrrs);
+        fr.setPower(-lrrs);
+        bl.setPower(lrrs);
+        br.setPower(-lrrs);
+        telemetry.addData("frontLeft", fl.getPower());
+        telemetry.addData("frontLeft", fr.getPower());
+        telemetry.addData("frontLeft", bl.getPower());
+        telemetry.addData("frontLeft", br.getPower());
+        telemetry.addData("Drive Power", lrrs);
+    }
+    public void strafe(){ //turning in place according to controller inputs
+        lrls = -gamepad1.left_stick_x;
+        fl.setPower(-lrrs);
+        fr.setPower(lrrs);
+        bl.setPower(lrrs);
+        br.setPower(-lrrs);
+        telemetry.addData("frontLeft", fl.getPower());
+        telemetry.addData("frontLeft", fr.getPower());
+        telemetry.addData("frontLeft", bl.getPower());
+        telemetry.addData("frontLeft", br.getPower());
+        telemetry.addData("Drive Power", lrls);
+    }
+    public void lift(){ //controls the lift
+        if(gamepad2.dpad_up==true){
+            lift.setPower(1);
+        }
+        else if(gamepad2.dpad_down==true){
+            lift.setPower(-1);
+        }
+        else{
+            lift.setPower(0);
+        }
+    }
+    public void intake(){
+
+    }
+}
