@@ -1,0 +1,108 @@
+package org.firstinspires.ftc.teamcode.Wilcox;
+
+
+import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.ColorSensor;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.TouchSensor;
+import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.util.Range;
+
+import static java.lang.Thread.sleep;
+
+
+public class skyBotLinear extends LinearOpMode {
+    public boolean left = true, right = false;
+    public DcMotor fl, fr, bl, br, lift, in1, in2, extend;
+    public Servo pm1, pm2, aclaw, clamp, arm1, cap, aclamp, rotator, arm2;
+
+    public ColorSensor color;
+    public DistanceSensor distance;
+
+    public boolean down = true, up = true;
+
+    public void runOpMode() throws InterruptedException {
+        fl = hardwareMap.get(DcMotor.class, "fl"); //drivetrain
+        fr = hardwareMap.get(DcMotor.class, "fr");
+        bl = hardwareMap.get(DcMotor.class, "bl");
+        br = hardwareMap.get(DcMotor.class, "br");
+        lift = hardwareMap.get(DcMotor.class, "lift"); //lift
+        in1 = hardwareMap.get(DcMotor.class, "in1"); //intake
+        in2 = hardwareMap.get(DcMotor.class, "in2");
+        extend = hardwareMap.get(DcMotor.class, "extend");
+        pm1 = hardwareMap.get(Servo.class, "pm1"); //platform movers
+        pm2 = hardwareMap.get(Servo.class, "pm2");
+        aclaw = hardwareMap.get(Servo.class, "aclaw"); //autonomous claw
+        aclamp = hardwareMap.get(Servo.class, "aclamp"); //auto clamp
+        clamp = hardwareMap.get(Servo.class, "clamp");//claw which grabs on the stone
+
+        //cap = hardwareMap.get(Servo.class, "cap");
+        color = hardwareMap.get(ColorSensor.class, "color");
+        distance = hardwareMap.get( DistanceSensor.class, "color");
+        //stoneChecker = hardwareMap.get(TouchSensor.class, "stoneChecker");
+
+        fr.setDirection(DcMotor.Direction.REVERSE);
+        br.setDirection(DcMotor.Direction.REVERSE);
+        in2.setDirection(DcMotor.Direction.REVERSE);
+        pm2.setDirection(Servo.Direction.REVERSE);
+
+        telemetry.addData("Status", "Initialized");
+        telemetry.update();
+        waitForStart();
+    }
+    
+
+
+    public void pm(boolean down){
+        if(down){ //platforms go down
+            pm1.setPosition(1);
+            pm2.setPosition(1);
+        }
+        else if(!down){//platforms go up
+            pm1.setPosition(0);
+            pm2.setPosition(0);
+        }
+    }
+    public void autoClaw(boolean down, Servo ac){
+        if(down){ //claw go down
+            ac.setPosition(1);
+
+        }
+        else if(!down){//claw go up
+            ac.setPosition(0);
+
+        }
+    }
+    public void autoClamp(boolean down, Servo aclamp){
+        if(down){ //clamp on claw close
+            aclamp.setPosition(1);
+
+        }
+        else if(!down){//clamp on claw open
+            aclamp.setPosition(0);
+
+        }
+    }
+    public void grab(Servo ac, Servo aclamp){
+        autoClaw(down, ac);
+        sleep(50);
+        autoClamp(down, aclamp);
+        sleep(50);
+        autoClaw(up, ac);
+
+    }
+    public void release(Servo ac, Servo aclamp){
+        autoClaw(down, ac);
+        sleep(50);
+        autoClamp(up, aclamp);
+        sleep(50);
+        autoClaw(up, ac);
+    }
+
+}
