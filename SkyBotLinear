@@ -38,7 +38,7 @@ public class skyBotLinear extends LinearOpMode {
         extend = hardwareMap.get(DcMotor.class, "extend");
         pm1 = hardwareMap.get(Servo.class, "pm1"); //platform movers
         pm2 = hardwareMap.get(Servo.class, "pm2");
-        aclaw = hardwareMap.get(Servo.class, "aclaw"); //autonomous claw
+        //aclaw = hardwareMap.get(Servo.class, "aclaw"); //autonomous claw
         aclamp = hardwareMap.get(Servo.class, "aclamp"); //auto clamp
         clamp = hardwareMap.get(Servo.class, "clamp");//claw which grabs on the stone
 
@@ -56,7 +56,7 @@ public class skyBotLinear extends LinearOpMode {
         telemetry.update();
         waitForStart();
     }
-    
+
 
 
     public void pm(boolean down){
