@@ -1,9 +1,9 @@
-package org.firstinspires.ftc.teamcode.Wilcox;
+package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
-import org.firstinspires.ftc.teamcode.Wilcox.skyBotLinear;
+
 
 @TeleOp(name="DC",group = "LinearOpMode" )
 public class Drive extends skyBotLinear {
@@ -14,8 +14,8 @@ public class Drive extends skyBotLinear {
         waitForStart();
         while(super.opModeIsActive()){
 
-            strafe();
-            //lift();
+            move();
+            lift();
             intake();
             claw();
             pm();
@@ -27,51 +27,17 @@ public class Drive extends skyBotLinear {
 
     }
 
-    public void fb(){ //moving forward and backwards according to controller inputs
-
-        /*fl.setPower(fbls);
-        fr.setPower(-fbls);
-        bl.setPower(fbls);
-        br.setPower(-fbls);*/
-        telemetry.addData("frontLeft", fl.getPower());
-        telemetry.addData("frontLeft", fr.getPower());
-        telemetry.addData("frontLeft", bl.getPower());
-        telemetry.addData("frontLeft", br.getPower());
-        telemetry.addData("Drive Power", fbls);
-    }
-    public void lr(){ //turning in place according to controller inputs
-
-        /*fl.setPower(lrrs);
-        fr.setPower(-lrrs);
-        bl.setPower(-lrrs);
-        br.setPower(lrrs);*/
-        telemetry.addData("frontLeft", fl.getPower());
-        telemetry.addData("frontLeft", fr.getPower());
-        telemetry.addData("frontLeft", bl.getPower());
-        telemetry.addData("frontLeft", br.getPower());
-        telemetry.addData("Drive Power", lrrs);
-    }
-    public void strafe(){ //turning in place according to controller inputs
+    public void move(){
 
         fbls = -gamepad1.left_stick_y;
         lrrs = -gamepad1.right_stick_x;
-        lrls = -gamepad1.left_stick_x;
-        /*
-        double power = lrls+fbls+lrrs;
-        if(power>1){
-            power=1;
-        }
-        fl.setPower(power);
-        fr.setPower(power);
-        bl.setPower(-power);
-        br.setPower(-power);
-        */
+        lrls = gamepad1.left_stick_x;
 
         if(fbls!=0&&Math.abs(fbls)>Math.abs(lrrs)&&Math.abs(fbls)>Math.abs(lrls)){
-            fl.setPower(-fbls);
-            fr.setPower(-fbls);
-            bl.setPower(-fbls);
-            br.setPower(-fbls);
+            fl.setPower(fbls);
+            fr.setPower(fbls);
+            bl.setPower(fbls);
+            br.setPower(fbls);
         }
         else if(lrrs!=0&&Math.abs(lrrs)>Math.abs(lrls)&&Math.abs(lrrs)>Math.abs(fbls)){
             fl.setPower(lrrs);
@@ -96,30 +62,40 @@ public class Drive extends skyBotLinear {
     public boolean liftStall = true;
     public int ls=0;
     public void lift(){ //controls the lift
-        if(gamepad2.dpad_up==true){ //lift up
+        if(gamepad2.dpad_down==true){ //lift up
             lift.setMode( DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             lift.setPower(1);
             liftStall = true;
+            ls = lift.getCurrentPosition();
         }
-        else if(gamepad2.dpad_down==true){//lift down
+        else if(gamepad2.dpad_up==true){//lift down
             lift.setMode( DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             lift.setPower(-1);
             liftStall=true;
+            ls = lift.getCurrentPosition();
         }
-        else{//lift off
 
-            if(liftStall){
-                lift.setMode( DcMotor.RunMode.RUN_USING_ENCODER);
-                ls = lift.getCurrentPosition();
-                liftStall=false;
-            }
+        else if(liftStall=true){//lift off
+            lift.setMode( DcMotor.RunMode.RUN_USING_ENCODER);
+
             lift.setTargetPosition(ls);
-            lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            while(lift.getCurrentPosition()!=ls){
-                lift.setPower(-1);
-            }
-            lift.setPower(0);
+            lift.setMode( DcMotor.RunMode.RUN_TO_POSITION );
 
+            if(lift.getCurrentPosition ()<ls){
+                lift.setPower(-0.5);
+            }
+            else if(lift.getCurrentPosition ()>ls){
+                lift.setPower(0.5);
+            }
+            else if(lift.getCurrentPosition()==ls){
+                lift.setPower(0);
+            }
+
+        }
+        if(gamepad2.y==true){
+            liftStall=false;
+            lift.setMode( DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            lift.setPower(0);
 
         }
     }
@@ -143,7 +119,7 @@ public class Drive extends skyBotLinear {
     }
     public void claw(){ //controls the servo claw
         if(gamepad2.right_trigger>0.1){ //auto clamps if servo is detected
-            clamp.setPosition(0.5);
+            clamp.setPosition(0.75);
         }
         else if(gamepad2.right_bumper==true){ //releases clamp
             clamp.setPosition(0.25);
@@ -160,23 +136,43 @@ public class Drive extends skyBotLinear {
         }
     }
     public void cap(){
-        if(gamepad2.b==true){//rotate capstone out
+        if(gamepad2.left_bumper==true){//rotate capstone out
             cap.setPosition(1);
         }
-        else if(gamepad2.x==true){//rotate capstone back in
+        else if(gamepad2.left_trigger>0.1){//rotate capstone back in
             cap.setPosition(0);
         }
     }
-    public void arm(){
-        if(gamepad2.y==true){
-            extend.setPower(1);
-        }
-        else if(gamepad2.a==true){
-            extend.setPower(-1);
+    public int as = 0;
+    public boolean armStall = true;
 
+    public void arm(){
+        if(gamepad2.b==true){
+            extend.setMode( DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            extend.setPower(1);
+            armStall = true;
+            as = extend.getCurrentPosition ();
         }
-        else{
+        else if(gamepad2.x==true){
+            extend.setMode( DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            extend.setPower(-1);
+            armStall = true;
+            as = extend.getCurrentPosition ();
+        }
+        else if(gamepad2.a=true){
+            armStall = false;
             extend.setPower(0);
+        }
+        else if(armStall= true){
+            extend.setMode( DcMotor.RunMode.RUN_USING_ENCODER);
+            extend.setTargetPosition(ls);
+            if(extend.getCurrentPosition ()<ls){
+                extend.setPower(-1);
+            }
+            else if(extend.getCurrentPosition ()>ls){
+                extend.setPower(1);
+            }
+            else{ extend.setPower(0);}
         }
     }
 
