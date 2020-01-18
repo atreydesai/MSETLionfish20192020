@@ -1,6 +1,8 @@
-package org.firstinspires.ftc.teamcode.Wilcox;
+package org.firstinspires.ftc.teamcode;
 
 
+import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -14,6 +16,12 @@ import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+
 import static java.lang.Thread.sleep;
 
 
@@ -25,8 +33,21 @@ public class skyBotLinear extends LinearOpMode {
     public ColorSensor color;
     public DistanceSensor distance;
 
-    public boolean down = true, up = true;
-
+    public boolean down = true, up = false;
+    public double width = 16.0; //inches
+    public int cpr = 28; //counts per rotation
+    public int gearratio = 20;
+    public double diameter = 4.0;
+    public double cpi = (cpr * gearratio)/(Math.PI * diameter); //counts per inch, 28cpr * gear ratio / (2 * pi * diameter (in inches, in the center))
+    public double bias = 0.8;//default 0.8
+    public double meccyBias = 0.9;//change to adjust only strafing movement
+    //
+    public double conversion = cpi * bias;
+    Boolean exit = false;
+    //
+    BNO055IMU imu;
+    Orientation angles;
+    Acceleration gravity;
     public void runOpMode() throws InterruptedException {
         fl = hardwareMap.get(DcMotor.class, "fl"); //drivetrain
         fr = hardwareMap.get(DcMotor.class, "fr");
@@ -50,21 +71,283 @@ public class skyBotLinear extends LinearOpMode {
         fr.setDirection(DcMotor.Direction.REVERSE);
         br.setDirection(DcMotor.Direction.REVERSE);
         in2.setDirection(DcMotor.Direction.REVERSE);
-        pm2.setDirection(Servo.Direction.REVERSE);
 
+        imu=  hardwareMap.get(BNO055IMU.class, "imu");
+        initGyro();
         telemetry.addData("Status", "Initialized");
         telemetry.update();
         waitForStart();
     }
 
+    public void moveToPosition(double inches, double speed){
+        //
+        int move = (int)(Math.round(inches*conversion));
+        //
+        bl.setTargetPosition(bl.getCurrentPosition() + move);
+        fl.setTargetPosition(fl.getCurrentPosition() + move);
+
+        br.setTargetPosition(br.getCurrentPosition() + move);
+        fr.setTargetPosition(fr.getCurrentPosition() + move);
+        //
+        fl.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        fr.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        bl.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        br.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        //
+        fr.setPower(speed);
+        fl.setPower(speed);
+        br.setPower(speed);
+        bl.setPower(speed);
+        while (fl.isBusy() && fr.isBusy() && bl.isBusy() && br.isBusy()){
+            if (exit){
+                fr.setPower(0);
+                fl.setPower(0);
+                br.setPower(0);
+                bl.setPower(0);
+                return;
+            }
+        }
+
+        fl.setPower(0);
+        fr.setPower(0);
+        br.setPower(0);
+        bl.setPower(0);
+        /*
+        fl.setPower(speed);
+        bl.setPower(speed);
+        fr.setPower(speed);
+        br.setPower(speed);
+        //
+        while (fl.isBusy() && fr.isBusy() && bl.isBusy() && br.isBusy()){
+            if (exit){
+                fr.setPower(0);
+                fl.setPower(0);
+                br.setPower(0);
+                bl.setPower(0);
+                return;
+            }
+        }
+        fr.setPower(0);
+        fl.setPower(0);
+        br.setPower(0);
+        bl.setPower(0);
+
+         */
+        return;
+    }
+    //
+    /*
+    This function uses the Expansion Hub IMU Integrated Gyro to turn a precise number of degrees (+/- 5).
+    Degrees should always be positive, make speedDirection negative to turn left.
+     */
+    public void turnWithGyro(double degrees, double speedDirection){
+        //<editor-fold desc="Initialize">
+        angles   = imu.getAngularOrientation( AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        double yaw = -angles.firstAngle;//make this negative
+        telemetry.addData("Speed Direction", speedDirection);
+        telemetry.addData("Yaw", yaw);
+        telemetry.update();
+        //
+        telemetry.addData("stuff", speedDirection);
+        telemetry.update();
+        //
+        double first;
+        double second;
+        //</editor-fold>
+        //
+        if (speedDirection > 0){//set target positions
+            //<editor-fold desc="turn right">
+            if (degrees > 10){
+                first = (degrees - 10) + devertify(yaw);
+                second = degrees + devertify(yaw);
+            }else{
+                first = devertify(yaw);
+                second = degrees + devertify(yaw);
+            }
+            //</editor-fold>
+        }else{
+            //<editor-fold desc="turn left">
+            if (degrees > 10){
+                first = devertify(-(degrees - 10) + devertify(yaw));
+                second = devertify(-degrees + devertify(yaw));
+            }else{
+                first = devertify(yaw);
+                second = devertify(-degrees + devertify(yaw));
+            }
+            //
+            //</editor-fold>
+        }
+        //
+        //<editor-fold desc="Go to position">
+        Double firsta = convertify(first - 5);//175
+        Double firstb = convertify(first + 5);//-175
+        //
+        turnWithEncoder(speedDirection);
+        //
+        if (Math.abs(firsta - firstb) < 11) {
+            while (!(firsta < yaw && yaw < firstb) && opModeIsActive()) {//within range?
+                angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+                gravity = imu.getGravity();
+                yaw = -angles.firstAngle;
+                telemetry.addData("Position", yaw);
+                telemetry.addData("first before", first);
+                telemetry.addData("first after", convertify(first));
+                telemetry.update();
+            }
+        }else{
+            //
+            while (!((firsta < yaw && yaw < 180) || (-180 < yaw && yaw < firstb)) && opModeIsActive()) {//within range?
+                angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+                gravity = imu.getGravity();
+                yaw = -angles.firstAngle;
+                telemetry.addData("Position", yaw);
+                telemetry.addData("first before", first);
+                telemetry.addData("first after", convertify(first));
+                telemetry.update();
+            }
+        }
+        //
+        Double seconda = convertify(second - 5);//175
+        Double secondb = convertify(second + 5);//-175
+        //
+        turnWithEncoder(speedDirection / 3);
+        //
+        if (Math.abs(seconda - secondb) < 11) {
+            while (!(seconda < yaw && yaw < secondb) && opModeIsActive()) {//within range?
+                angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+                gravity = imu.getGravity();
+                yaw = -angles.firstAngle;
+                telemetry.addData("Position", yaw);
+                telemetry.addData("second before", second);
+                telemetry.addData("second after", convertify(second));
+                telemetry.update();
+            }
+            while (!((seconda < yaw && yaw < 180) || (-180 < yaw && yaw < secondb)) && opModeIsActive()) {//within range?
+                angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+                gravity = imu.getGravity();
+                yaw = -angles.firstAngle;
+                telemetry.addData("Position", yaw);
+                telemetry.addData("second before", second);
+                telemetry.addData("second after", convertify(second));
+                telemetry.update();
+            }
+            fl.setPower(0);
+            fr.setPower(0);
+            bl.setPower(0);
+            br.setPower(0);
+        }
+        //</editor-fold>
+        //
+        fl.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        fr.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        bl.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        br.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        fl.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        fr.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        bl.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        br.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    }
+    //
+    /*
+    This function uses the encoders to strafe left or right.
+    Negative input for inches results in left strafing.
+     */
+    public void strafeToPosition(double inches, double speed){
+        //
+        int move = (int)(Math.round(inches * cpi * meccyBias));
+        //
+        bl.setTargetPosition(bl.getCurrentPosition() - move);
+        fl.setTargetPosition(fl.getCurrentPosition() + move);
+        br.setTargetPosition(br.getCurrentPosition() + move);
+        fr.setTargetPosition(fr.getCurrentPosition() - move);
+        //
+        fl.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        fr.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        bl.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        br.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        //
+        fl.setPower(speed);
+        bl.setPower(speed);
+        fr.setPower(speed);
+        br.setPower(speed);
+        //
+        while (fl.isBusy() && fr.isBusy() && bl.isBusy() && br.isBusy()){}
+        fr.setPower(0);
+        fl.setPower(0);
+        br.setPower(0);
+        bl.setPower(0);
+        return;
+    }
+    //
+    /*
+    A tradition within the Thunder Pengwins code, we always start programs with waitForStartify,
+    our way of adding personality to our programs.
+     */
+    public void waitForStartify(){
+        waitForStart();
+    }
+    //
+    /*
+    These functions are used in the turnWithGyro function to ensure inputs
+    are interpreted properly.
+     */
+    public double devertify(double degrees){
+        if (degrees < 0){
+            degrees = degrees + 360;
+        }
+        return degrees;
+    }
+    public double convertify(double degrees){
+        if (degrees > 179){
+            degrees = -(360 - degrees);
+        } else if(degrees < -180){
+            degrees = 360 + degrees;
+        } else if(degrees > 360){
+            degrees = degrees - 360;
+        }
+        return degrees;
+    }
+    //
+    /*
+    This function is called at the beginning of the program to activate
+    the IMU Integrated Gyro.
+     */
+    public void initGyro(){
+        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+        parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
+        parameters.accelUnit           = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+        //parameters.calibrationDataFile = "GyroCal.json"; // see the calibration sample opmode
+        parameters.loggingEnabled      = true;
+        parameters.loggingTag          = "IMU";
+        parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator ();
+        //
+        imu = hardwareMap.get(BNO055IMU.class, "imu");
+        imu.initialize(parameters);
+    }
+    //
+    /*
+    This function is used in the turnWithGyro function to set the
+    encoder mode and turn.
+     */
+    public void turnWithEncoder(double input){
+        fl.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        bl.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        fr.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        br.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        //
+        fl.setPower(input);
+        bl.setPower(input);
+        fr.setPower(-input);
+        br.setPower(-input);
+    }
 
 
     public void pm(boolean down){
-        if(down){ //platforms go down
+        if(down==true){ //platforms go down
             pm1.setPosition(1);
             pm2.setPosition(1);
         }
-        else if(!down){//platforms go up
+        else if(down==false){//platforms go up
             pm1.setPosition(0);
             pm2.setPosition(0);
         }
